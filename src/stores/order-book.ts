@@ -33,7 +33,7 @@ export const useOrderBookStore = defineStore('orderBook', () => {
   }
 
   function handler(data: BookOrderStreamData) {
-    const { u, b, a, U } = data
+    const { u, b, a, U, s } = data
 
     if (u <= lastUpdateId.value)
       return
@@ -41,6 +41,10 @@ export const useOrderBookStore = defineStore('orderBook', () => {
     if (U <= lastUpdateId.value + 1 && u >= lastUpdateId.value + 1) {
       updateOrderBook(b, a)
       lastUpdateId.value = u
+    }
+    else {
+      disconnectFromStream()
+      setTimeout(() => connectToStream(s), 1000)
     }
   }
 
@@ -66,8 +70,8 @@ export const useOrderBookStore = defineStore('orderBook', () => {
   }
 
   function clearOrderBookMaps() {
-    asksMap.clear();
-    bidsMap.clear();
+    asksMap.clear()
+    bidsMap.clear()
   }
 
   async function getOrderBookSnapshot(ticker: string) {
