@@ -18,7 +18,7 @@ export const router = createRouter({
       component: () => import('@/views/order-book-view.vue'),
     },
     {
-      path: '/:catch(.*)',
+      path: '/:pathMatch(.*)*',
       component: () => import('@/views/not-found-view.vue'),
     },
   ],
