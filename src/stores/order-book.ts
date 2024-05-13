@@ -30,6 +30,7 @@ export const useOrderBookStore = defineStore('orderBook', () => {
       orderBookWs = null
     }
     clearOrderBookMaps()
+    resetOrderBook()
   }
 
   function handler(data: BookOrderStreamData) {
@@ -72,6 +73,12 @@ export const useOrderBookStore = defineStore('orderBook', () => {
   function clearOrderBookMaps() {
     asksMap.clear()
     bidsMap.clear()
+  }
+
+  function resetOrderBook() {
+    bids.value = []
+    asks.value = []
+    lastUpdateId.value = 0
   }
 
   async function getOrderBookSnapshot(ticker: string) {
