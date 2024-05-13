@@ -29,6 +29,7 @@ export const useOrderBookStore = defineStore('orderBook', () => {
       orderBookWs.disconnectFromStream()
       orderBookWs = null
     }
+    clearOrderBookMaps()
   }
 
   function handler(data: BookOrderStreamData) {
@@ -62,6 +63,11 @@ export const useOrderBookStore = defineStore('orderBook', () => {
 
     bids.value = [...bidsMap.entries()].slice(0, 1000)
     asks.value = [...asksMap.entries()].slice(0, 1000)
+  }
+
+  function clearOrderBookMaps() {
+    asksMap.clear();
+    bidsMap.clear();
   }
 
   async function getOrderBookSnapshot(ticker: string) {
