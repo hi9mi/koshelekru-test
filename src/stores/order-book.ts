@@ -66,8 +66,8 @@ export const useOrderBookStore = defineStore('orderBook', () => {
     updateBook(newBids, bidsMap)
     updateBook(newAsks, asksMap)
 
-    bids.value = [...bidsMap.entries()].slice(0, 1000)
-    asks.value = [...asksMap.entries()].slice(0, 1000)
+    bids.value = [...bidsMap.entries()].slice(0, 1000).sort((a, b) => Number.parseFloat(b[0]) - Number.parseFloat(a[0]))
+    asks.value = [...asksMap.entries()].slice(0, 1000).sort((a, b) => Number.parseFloat(a[0]) - Number.parseFloat(b[0]))
   }
 
   function clearOrderBookMaps() {
