@@ -8,6 +8,7 @@ export const useOrderBookStore = defineStore('orderBook', () => {
   const lastUpdateId = ref(0)
   const bids = shallowRef<PriceLevelAndAmount[]>([])
   const asks = shallowRef<PriceLevelAndAmount[]>([])
+  const isConnectingToStream = ref(true)
 
   const asksMap = new Map<string, string>()
   const bidsMap = new Map<string, string>()
@@ -16,6 +17,7 @@ export const useOrderBookStore = defineStore('orderBook', () => {
   async function connectToStream(ticker: string) {
     if (orderBookWs)
       disconnectFromStream()
+    isConnectingToStream.value = true
 
     orderBookWs = new OrderBookWs(ticker)
     orderBookWs.connectToStream({
@@ -29,7 +31,7 @@ export const useOrderBookStore = defineStore('orderBook', () => {
       orderBookWs.disconnectFromStream()
       orderBookWs = null
     }
-    clearOrderBookMaps()
+
     resetOrderBook()
   }
 
@@ -42,10 +44,13 @@ export const useOrderBookStore = defineStore('orderBook', () => {
     if (U <= lastUpdateId.value + 1 && u >= lastUpdateId.value + 1) {
       updateOrderBook(b, a)
       lastUpdateId.value = u
+
+      if (isConnectingToStream.value)
+        isConnectingToStream.value = false
     }
     else {
       disconnectFromStream()
-      setTimeout(() => connectToStream(s), 1000)
+      setTimeout(() => connectToStream(s), 100)
     }
   }
 
@@ -78,15 +83,17 @@ export const useOrderBookStore = defineStore('orderBook', () => {
   function resetOrderBook() {
     bids.value = []
     asks.value = []
-    lastUpdateId.value = 0
+    isConnectingToStream.value = true
+
+    clearOrderBookMaps()
   }
 
   async function getOrderBookSnapshot(ticker: string) {
     try {
       const snapshot = await apiGetOrderBookSnapshot(ticker)
       lastUpdateId.value = snapshot.lastUpdateId
-      bids.value = snapshot.bids
-      asks.value = snapshot.asks
+      snapshot.bids.forEach(([price, amount]) => bidsMap.set(price, amount))
+      snapshot.asks.forEach(([price, amount]) => asksMap.set(price, amount))
     }
     catch (error) {
       console.error(error)
@@ -98,5 +105,6 @@ export const useOrderBookStore = defineStore('orderBook', () => {
     disconnectFromStream,
     bids,
     asks,
+    isConnectingToStream,
   }
 })

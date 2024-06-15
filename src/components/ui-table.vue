@@ -1,21 +1,16 @@
-<script setup lang="ts">
+<script setup lang="ts" generic="T extends any[]">
 import { computed, ref } from 'vue'
-import { useDisplay } from 'vuetify'
 
 const props = defineProps<{
   title: string
-  items: { price: string, amount: string, total: string }[]
+  items: T
+  loading?: boolean
+  headers: { title: string, key: string }[]
+  uniqueKey?: keyof T[number]
 }>()
 
-const { mobile } = useDisplay()
 const itemsPerPage = ref(100)
 const availableItemsPerPage = [100, 500, 1000]
-
-const headers = computed(() => {
-  return mobile.value
-    ? [{ title: 'Price', key: 'price' }, { title: 'Total', key: 'total' }]
-    : [{ title: 'Price', key: 'price' }, { title: 'Amount', key: 'amount' }, { title: 'Total', key: 'total' }]
-})
 
 const slicedItems = computed(() => {
   return props.items.slice(0, itemsPerPage.value)
@@ -24,14 +19,16 @@ const slicedItems = computed(() => {
 
 <template>
   <v-card class="table-view">
-    <v-card-title>
+    <v-card-title class="table-view__title">
       {{ title }}
-      <v-spacer />
       <v-select
         v-model="itemsPerPage"
         :items="availableItemsPerPage"
         label="Items per page"
-        dense
+        variant="outlined"
+        class="items-per-page"
+        hide-details="auto"
+        density="compact"
       />
     </v-card-title>
 
@@ -45,20 +42,23 @@ const slicedItems = computed(() => {
           </tr>
         </thead>
         <tbody>
-          <tr
-            v-for="item in slicedItems"
-            :key="item.price"
-          >
-            <td>
-              {{ item.price }}
-            </td>
-            <td v-if="!mobile">
-              {{ item.amount }}
-            </td>
-            <td>
-              {{ item.total }}
-            </td>
-          </tr>
+          <template v-if="loading">
+            <tr v-for="i in 10" :key="i">
+              <td v-for="header in headers" :key="header.key">
+                <v-skeleton-loader type="text" class="skeleton-text " />
+              </td>
+            </tr>
+          </template>
+          <template v-else>
+            <tr
+              v-for="(item, index) in slicedItems"
+              :key="item[uniqueKey] ?? index"
+            >
+              <td v-for="header in headers" :key="header.key">
+                {{ item[header.key] }}
+              </td>
+            </tr>
+          </template>
         </tbody>
       </v-table>
     </div>
@@ -72,9 +72,14 @@ const slicedItems = computed(() => {
   height: calc(100vh - 100px);
 }
 
+.table-view__title {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
 .table-view__container {
   display: flex;
-  margin-top: 20px;
   flex-grow: 1;
   overflow: hidden;
 }
@@ -92,7 +97,18 @@ const slicedItems = computed(() => {
   background: #fff;
 }
 
-.table-view__table > div {
+.table-view__table > :deep(div) {
   width: 100%;
+  overflow-y: scroll;
+}
+
+.skeleton-text > :deep(div) {
+  margin: 0 !important;
+}
+
+@media screen and (max-width: 600px) {
+  .table-view {
+    height: calc(50vh - 60px);
+  }
 }
 </style>
